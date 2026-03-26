@@ -39,6 +39,15 @@ dependencies = [
     # Document parsing
     "unstructured[pdf,md,html]>=0.16.0",
 
+    # Object storage
+    "minio>=7.2.0",
+
+    # Tokenization
+    "tiktoken>=0.7.0",
+
+    # File uploads (FastAPI multipart)
+    "python-multipart>=0.0.9",
+
     # MCP
     "mcp>=1.0.0",
 

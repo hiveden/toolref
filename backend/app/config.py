@@ -51,9 +51,24 @@ class Settings(BaseSettings):
     milvus_host: str = "milvus-standalone"
     milvus_port: int = 19530
 
+    # --- MinIO ---
+    minio_host: str = "minio"
+    minio_port: int = 9000
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_bucket: str = "toolref-documents"
+    minio_secure: bool = False
+
     # --- Embedding ---
     embedding_model: str = "BAAI/bge-m3"
     embedding_dim: int = 1024
+    embedding_batch_size: int = 32
+
+    # --- Chunking ---
+    chunk_parent_size: int = 1024
+    chunk_parent_overlap: int = 64
+    chunk_child_size: int = 256
+    chunk_child_overlap: int = 32
 
     # --- LLM ---
     llm_provider: str = "ollama"  # "ollama" | "deepseek" | "openai"

@@ -46,6 +46,30 @@ services:
       - toolref
     restart: unless-stopped
 
+  # ── Ingestion Worker ───────────────────────────────────────────────────────
+  ingestion-worker:
+    build:
+      context: ./backend
+      target: development
+    container_name: toolref-ingestion-worker
+    command: ["python", "-m", "app.ingestion.worker"]
+    env_file: .env
+    volumes:
+      - ./backend:/app
+      - model-cache:/root/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      milvus-standalone:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - toolref
+    restart: unless-stopped
+
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine

@@ -10,10 +10,12 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.documents import router as documents_router
 from app.api.health import router as health_router
 from app.cache.redis import close_redis, connect_redis
 from app.config import settings
 from app.db.engine import engine
+from app.storage.minio import ensure_bucket
 from app.vectorstore.milvus import connect_milvus, disconnect_milvus
 
 logging.basicConfig(
@@ -39,6 +41,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Milvus (sync pymilvus API, run in default thread)
     connect_milvus()
+
+    # MinIO — ensure the document bucket exists
+    ensure_bucket()
 
     yield
 
@@ -69,6 +74,7 @@ def create_app() -> FastAPI:
 
     # Routers
     app.include_router(health_router)
+    app.include_router(documents_router)
 
     return app
 
