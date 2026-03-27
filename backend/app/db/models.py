@@ -33,7 +33,7 @@ class Base(DeclarativeBase):
 # ── Enums ────────────────────────────────────────────────────────────────────
 
 
-class DocType(str, enum.Enum):
+class DocType(enum.StrEnum):
     """Supported document types."""
 
     PDF = "pdf"
@@ -42,7 +42,7 @@ class DocType(str, enum.Enum):
     TXT = "txt"
 
 
-class DocStatus(str, enum.Enum):
+class DocStatus(enum.StrEnum):
     """Document processing status."""
 
     PENDING = "pending"

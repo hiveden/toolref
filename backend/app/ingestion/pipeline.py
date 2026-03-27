@@ -17,12 +17,11 @@ import time
 import uuid
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import update
 
-from app.config import settings
 from app.db.engine import async_session
 from app.db.models import Chunk, DocStatus, DocType, Document
-from app.ingestion.chunker import ChunkConfig, ChildChunk, ParentChunk, chunk_document
+from app.ingestion.chunker import ChildChunk, ChunkConfig, ParentChunk, chunk_document
 from app.ingestion.embedder import embedding_service
 from app.ingestion.parser import parse_document
 from app.storage.minio import download_file
@@ -118,37 +117,36 @@ class IngestPipeline:
         Returns:
             Total number of chunk rows created (parents + children).
         """
-        async with async_session() as session:
-            async with session.begin():
-                # Parent chunks (no embedding_id — not indexed in Milvus).
-                for pc in parent_chunks:
-                    session.add(
-                        Chunk(
-                            id=uuid.UUID(pc.chunk_id),
-                            document_id=uuid.UUID(doc_id),
-                            parent_chunk_id=None,
-                            chunk_index=pc.chunk_index,
-                            content=pc.text,
-                            token_count=pc.token_count,
-                            embedding_id=None,
-                            metadata_=pc.metadata,
-                        )
+        async with async_session() as session, session.begin():
+            # Parent chunks (no embedding_id — not indexed in Milvus).
+            for pc in parent_chunks:
+                session.add(
+                    Chunk(
+                        id=uuid.UUID(pc.chunk_id),
+                        document_id=uuid.UUID(doc_id),
+                        parent_chunk_id=None,
+                        chunk_index=pc.chunk_index,
+                        content=pc.text,
+                        token_count=pc.token_count,
+                        embedding_id=None,
+                        metadata_=pc.metadata,
                     )
+                )
 
-                # Child chunks (embedding_id points to Milvus chunk_id).
-                for cc in child_chunks:
-                    session.add(
-                        Chunk(
-                            id=uuid.UUID(cc.chunk_id),
-                            document_id=uuid.UUID(doc_id),
-                            parent_chunk_id=uuid.UUID(cc.parent_chunk_id),
-                            chunk_index=cc.chunk_index,
-                            content=cc.text,
-                            token_count=cc.token_count,
-                            embedding_id=cc.chunk_id,
-                            metadata_=cc.metadata,
-                        )
+            # Child chunks (embedding_id points to Milvus chunk_id).
+            for cc in child_chunks:
+                session.add(
+                    Chunk(
+                        id=uuid.UUID(cc.chunk_id),
+                        document_id=uuid.UUID(doc_id),
+                        parent_chunk_id=uuid.UUID(cc.parent_chunk_id),
+                        chunk_index=cc.chunk_index,
+                        content=cc.text,
+                        token_count=cc.token_count,
+                        embedding_id=cc.chunk_id,
+                        metadata_=cc.metadata,
                     )
+                )
 
         return len(parent_chunks) + len(child_chunks)
 
@@ -160,16 +158,15 @@ class IngestPipeline:
         error: str | None = None,
     ) -> None:
         """Update the document row status and optional error metadata."""
-        async with async_session() as session:
-            async with session.begin():
-                values: dict[str, Any] = {"status": status, "total_chunks": total_chunks}
-                if error:
-                    values["metadata_"] = {"error": error}
-                await session.execute(
-                    update(Document)
-                    .where(Document.id == uuid.UUID(doc_id))
-                    .values(**values)
-                )
+        async with async_session() as session, session.begin():
+            values: dict[str, Any] = {"status": status, "total_chunks": total_chunks}
+            if error:
+                values["metadata_"] = {"error": error}
+            await session.execute(
+                update(Document)
+                .where(Document.id == uuid.UUID(doc_id))
+                .values(**values)
+            )
 
     # ── Main entry point ─────────────────────────────────────────────────
 
@@ -197,7 +194,9 @@ class IngestPipeline:
         try:
             doc_type = DocType(doc_type_str)
         except ValueError:
-            await self._update_status(doc_id, DocStatus.FAILED, error=f"Unknown doc type: {doc_type_str}")
+            await self._update_status(
+                doc_id, DocStatus.FAILED, error=f"Unknown doc type: {doc_type_str}",
+            )
             return
 
         # Mark as processing.
@@ -211,11 +210,18 @@ class IngestPipeline:
 
             # Stage 2 — Parse
             t0 = time.monotonic()
-            elements = await self._parse(file_bytes, doc_type, {"doc_id": doc_id, "namespace": namespace})
-            logger.info("[%s] Stage 2 (parse): %.2fs — %d elements", doc_id[:8], time.monotonic() - t0, len(elements))
+            elements = await self._parse(
+                file_bytes, doc_type, {"doc_id": doc_id, "namespace": namespace},
+            )
+            logger.info(
+                "[%s] Stage 2 (parse): %.2fs — %d elements",
+                doc_id[:8], time.monotonic() - t0, len(elements),
+            )
 
             if not elements:
-                await self._update_status(doc_id, DocStatus.FAILED, error="Parser returned no elements")
+                await self._update_status(
+                    doc_id, DocStatus.FAILED, error="Parser returned no elements",
+                )
                 return
 
             # Stage 3 — Chunk
@@ -230,7 +236,9 @@ class IngestPipeline:
             )
 
             if not child_chunks:
-                await self._update_status(doc_id, DocStatus.FAILED, error="Chunker produced no child chunks")
+                await self._update_status(
+                    doc_id, DocStatus.FAILED, error="Chunker produced no child chunks",
+                )
                 return
 
             # Stage 4 — Embed (child chunks only — they are indexed in Milvus)
@@ -241,13 +249,18 @@ class IngestPipeline:
 
             # Stage 5 — Write to Milvus
             t0 = time.monotonic()
-            await self._write_milvus(child_chunks, dense_embeddings, sparse_embeddings, doc_id, namespace)
+            await self._write_milvus(
+                child_chunks, dense_embeddings, sparse_embeddings, doc_id, namespace,
+            )
             logger.info("[%s] Stage 5 (milvus): %.2fs", doc_id[:8], time.monotonic() - t0)
 
             # Stage 6 — Write to PostgreSQL
             t0 = time.monotonic()
             total_chunks = await self._write_postgres(doc_id, parent_chunks, child_chunks)
-            logger.info("[%s] Stage 6 (postgres): %.2fs — %d rows", doc_id[:8], time.monotonic() - t0, total_chunks)
+            logger.info(
+                "[%s] Stage 6 (postgres): %.2fs — %d rows",
+                doc_id[:8], time.monotonic() - t0, total_chunks,
+            )
 
             # Stage 7 — Update status
             await self._update_status(doc_id, DocStatus.COMPLETED, total_chunks=total_chunks)

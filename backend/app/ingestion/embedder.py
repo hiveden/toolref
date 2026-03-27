@@ -87,7 +87,11 @@ class EmbeddingService:
             all_dense.append(output["dense_vecs"])
             all_sparse.extend(output["lexical_weights"])
 
-        dense_embeddings = np.concatenate(all_dense, axis=0) if all_dense else np.empty((0, settings.embedding_dim))
+        dense_embeddings = (
+            np.concatenate(all_dense, axis=0)
+            if all_dense
+            else np.empty((0, settings.embedding_dim))
+        )
         logger.info(
             "Generated embeddings for %d texts (dense shape=%s)",
             len(texts),

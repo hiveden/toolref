@@ -18,7 +18,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache.redis import get_redis
@@ -245,7 +245,11 @@ async def execute_query_stream(
                 await asyncio.sleep(0.018)  # ~55 tokens/s
 
             latency_ms = int((time.monotonic() - t_start) * 1000)
-            yield f"data: {json.dumps({'type': 'done', 'sources': cached_sources, 'cached': True, 'latency_ms': latency_ms, 'rewrite_count': 0})}\n\n"
+            done_payload = {
+                'type': 'done', 'sources': cached_sources,
+                'cached': True, 'latency_ms': latency_ms, 'rewrite_count': 0,
+            }
+            yield f"data: {json.dumps(done_payload)}\n\n"
 
             await _save_query_history(
                 session=session,
@@ -286,7 +290,8 @@ async def execute_query_stream(
             result = await rag_graph.ainvoke(initial_state)
         except Exception:
             logger.exception("RAG graph execution failed for query='%s'", request.query[:60])
-            yield f"data: {json.dumps({'type': 'error', 'message': 'Pipeline error — please try again.'})}\n\n"
+            err = {'type': 'error', 'message': 'Pipeline error — please try again.'}
+            yield f"data: {json.dumps(err)}\n\n"
             return
 
         answer: str = result.get("answer", "")
@@ -303,7 +308,11 @@ async def execute_query_stream(
         total_latency_ms = int((time.monotonic() - t_start) * 1000)
 
         # ── 4. Send done event ────────────────────────────────────────────
-        yield f"data: {json.dumps({'type': 'done', 'sources': sources, 'cached': False, 'latency_ms': total_latency_ms, 'rewrite_count': rewrite_count})}\n\n"
+        done_payload = {
+            'type': 'done', 'sources': sources, 'cached': False,
+            'latency_ms': total_latency_ms, 'rewrite_count': rewrite_count,
+        }
+        yield f"data: {json.dumps(done_payload)}\n\n"
 
         # ── 5. Cache & persist (best-effort, after streaming) ─────────────
         if request.use_cache and rewrite_count == 0:

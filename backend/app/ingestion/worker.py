@@ -13,11 +13,17 @@ The worker:
 5. Acknowledges the message on success; retries up to 3 times on failure.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import signal
+from typing import TYPE_CHECKING
 
 from app.config import settings
+
+if TYPE_CHECKING:
+    from app.ingestion.pipeline import IngestPipeline
 
 # ── Logging (mirrors main.py format) ─────────────────────────────────────────
 logging.basicConfig(
@@ -68,7 +74,7 @@ async def _close_connections() -> None:
 
 
 async def _process_with_retry(
-    pipeline: "IngestPipeline",
+    pipeline: IngestPipeline,
     doc_id: str,
     namespace: str,
     object_name: str,
@@ -78,7 +84,6 @@ async def _process_with_retry(
 
     Returns ``True`` if processing eventually succeeded.
     """
-    from app.ingestion.pipeline import IngestPipeline
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:

@@ -20,6 +20,7 @@ Node overview (architecture §4.2.3–4.2.7):
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import time
@@ -48,7 +49,8 @@ You are a query analysis assistant. Analyze the following user query and return 
 Query: {query}
 
 Return JSON with:
-- "query_type": "simple" or "complex" (complex if multi-hop, involves comparisons, or requires multiple facts)
+- "query_type": "simple" or "complex" (complex if multi-hop,
+  involves comparisons, or requires multiple facts)
 - "entities": list of key entities/concepts mentioned in the query
 - "intent": brief description of what the user wants to know
 
@@ -56,7 +58,8 @@ Respond ONLY with valid JSON, no other text.
 """
 
 DECOMPOSE_QUERY_PROMPT = """\
-You are a query decomposition assistant. Break the following complex query into 2-4 simpler sub-queries that can each be answered independently.
+You are a query decomposition assistant. Break the following complex query \
+into 2-4 simpler sub-queries that can each be answered independently.
 
 Original query: {query}
 Entities identified: {entities}
@@ -68,7 +71,8 @@ Respond ONLY with valid JSON, no other text.
 """
 
 GRADE_DOCUMENT_PROMPT = """\
-You are a relevance grading assistant. Evaluate if the following document contains information relevant to answering the query.
+You are a relevance grading assistant. Evaluate if the following document \
+contains information relevant to answering the query.
 
 Query: {query}
 Document: {document}
@@ -87,13 +91,15 @@ Original query: {query}
 Documents retrieved (not relevant enough):
 {doc_summaries}
 
-Generate a single, improved search query that would find the right information. Focus on key terms and specificity.
+Generate a single, improved search query that would find the right information. \
+Focus on key terms and specificity.
 
 Return ONLY the rewritten query text, nothing else.
 """
 
 GENERATE_PROMPT = """\
-You are a knowledgeable assistant. Answer the user's question based ONLY on the provided context documents. Always cite your sources.
+You are a knowledgeable assistant. Answer the user's question based ONLY on \
+the provided context documents. Always cite your sources.
 
 Question: {query}
 
@@ -329,10 +335,8 @@ async def _enrich_with_parent_text(docs: list[dict]) -> list[dict]:
         # Convert string IDs to UUIDs for the query
         parent_uuids = []
         for pid in parent_ids:
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 parent_uuids.append(uuid.UUID(pid))
-            except (ValueError, AttributeError):
-                pass
 
         if not parent_uuids:
             return docs
@@ -346,10 +350,8 @@ async def _enrich_with_parent_text(docs: list[dict]) -> list[dict]:
         child_ids = [d.get("chunk_id", "") for d in docs]
         child_uuids = []
         for cid in child_ids:
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 child_uuids.append(uuid.UUID(cid))
-            except (ValueError, AttributeError):
-                pass
 
         child_chunk_map: dict[str, Chunk] = {}
         if child_uuids:

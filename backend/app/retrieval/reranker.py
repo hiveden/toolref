@@ -82,7 +82,7 @@ class RerankerService:
         if isinstance(scores, (int, float)):
             scores = [scores]
 
-        for doc, score in zip(documents, scores):
+        for doc, score in zip(documents, scores, strict=False):
             doc["rerank_score"] = float(score)
 
         ranked = sorted(documents, key=lambda d: d["rerank_score"], reverse=True)

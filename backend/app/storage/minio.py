@@ -8,7 +8,6 @@ via ``asyncio.to_thread``.
 
 import io
 import logging
-from typing import Optional
 
 from minio import Minio
 from minio.error import S3Error
@@ -17,7 +16,7 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-_client: Optional[Minio] = None
+_client: Minio | None = None
 
 
 def _get_client() -> Minio:
@@ -52,7 +51,9 @@ def ensure_bucket() -> None:
         logger.info("MinIO bucket '%s' already exists", bucket)
 
 
-def upload_file(file_data: bytes, object_name: str, content_type: str = "application/octet-stream") -> str:
+def upload_file(
+    file_data: bytes, object_name: str, content_type: str = "application/octet-stream",
+) -> str:
     """Upload raw bytes to MinIO and return the object name.
 
     Args:

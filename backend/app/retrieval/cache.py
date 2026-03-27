@@ -15,7 +15,7 @@ import base64
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -210,7 +210,7 @@ class SemanticCache:
                     "result": result_json,
                     "query": query,
                     "namespace": namespace,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
             await self.redis.expire(key, ttl)

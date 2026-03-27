@@ -21,6 +21,7 @@ from app.db.engine import get_session
 from app.db.models import Chunk, DocStatus, DocType, Document
 from app.ingestion.queue import publish
 from app.storage.minio import delete_file, upload_file
+from app.vectorstore.milvus import CHILD_CHUNKS_COLLECTION
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,8 @@ async def upload_document(
     if existing is not None:
         raise HTTPException(
             status_code=409,
-            detail=f"Duplicate document: a file with the same hash already exists (id={existing.id})",
+            detail=f"Duplicate document: a file with the same hash already exists "
+            f"(id={existing.id})",
         )
 
     # Generate IDs.
