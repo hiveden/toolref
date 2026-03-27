@@ -28,8 +28,11 @@ dependencies = [
     # Vector store
     "pymilvus>=2.4.0,<2.5",
 
-    # LLM / RAG (locked for future use)
+    # LLM / RAG
     "langchain>=0.3.0,<0.4",
+    "langchain-core>=0.3.0,<0.4",
+    "langchain-openai>=0.3.0",
+    "langchain-ollama>=0.3.0",
     "langgraph>=0.3.0,<0.4",
 
     # Embedding & Reranking

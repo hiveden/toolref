@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.documents import router as documents_router
 from app.api.health import router as health_router
+from app.api.query import router as query_router
 from app.cache.redis import close_redis, connect_redis
 from app.config import settings
 from app.db.engine import engine
@@ -75,6 +76,7 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(health_router)
     app.include_router(documents_router)
+    app.include_router(query_router)
 
     return app
 

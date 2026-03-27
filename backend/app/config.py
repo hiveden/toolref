@@ -73,9 +73,27 @@ class Settings(BaseSettings):
     # --- LLM ---
     llm_provider: str = "ollama"  # "ollama" | "deepseek" | "openai"
     llm_model: str = "qwen2.5:7b"
+    llm_temperature: float = 0.1
     ollama_base_url: str = "http://localhost:11434"
     openai_api_key: str = ""
+    openai_api_base: str = "https://api.openai.com/v1"
     deepseek_api_key: str = ""
+    deepseek_api_base: str = "https://api.deepseek.com/v1"
+
+    # --- Reranker ---
+    reranker_model: str = "BAAI/bge-reranker-v2-m3"
+    reranker_top_k: int = 5
+
+    # --- Semantic Cache ---
+    cache_similarity_threshold: float = 0.92
+    cache_default_ttl: int = 86400       # 24 hours
+    cache_hot_ttl: int = 259200          # 72 hours
+    cache_low_freq_ttl: int = 43200      # 12 hours
+
+    # --- RAG Retrieval ---
+    grading_relevance_threshold: float = 0.6
+    max_rewrite_count: int = 2
+    consistency_check_enabled: bool = False  # MVP: disabled
 
     # --- CORS ---
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
