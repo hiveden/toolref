@@ -3,9 +3,10 @@ FROM python:3.12-slim AS development
 
 WORKDIR /app
 
-# System dependencies for psycopg and general build tools
+# System dependencies for psycopg, PDF parsing (unstructured), and general build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc libc6-dev zlib1g-dev libpq-dev curl \
+        libxcb1 libx11-6 libgl1 libglib2.0-0 poppler-utils tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
