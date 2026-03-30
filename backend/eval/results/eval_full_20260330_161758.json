@@ -1,0 +1,260 @@
+{
+  "timestamp": "2026-03-30T16:17:58.270634+00:00",
+  "mode": "full",
+  "total_cases": 10,
+  "errors": 0,
+  "aggregate_ir": {
+    "hit_rate": 1.0,
+    "mrr": 1.0,
+    "precision_at_k": 0.28,
+    "recall_at_k": 1.0
+  },
+  "aggregate_ragas": {
+    "answer_relevancy": 0.9356115678250565,
+    "context_recall": 0.3703703703703704
+  },
+  "results": [
+    {
+      "test_case_id": "tc-001",
+      "query": "What is LangGraph and how does it differ from simple chain-based architectures?",
+      "category": "factual",
+      "difficulty": "easy",
+      "answer_preview": "LangGraph is a framework for building stateful, multi-step AI agent applications, built on top of LangChain. It provides a graph-based abstraction for defining complex agent workflows, which includes ",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 63867,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-002",
+      "query": "What is the self-corrective RAG pattern and what are its steps?",
+      "category": "factual",
+      "difficulty": "medium",
+      "answer_preview": "The self-corrective RAG pattern is a recommended architecture for building production Agentic RAG systems, as mentioned in [Source 1]. This pattern follows a specific sequence of steps to ensure the s",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide",
+        "test-doc.md",
+        "Prompt Engineering Best Practices"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 25843,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.8269963584485112,
+        "context_recall": 0.5
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-003",
+      "query": "What are the main types of vector database indexing algorithms?",
+      "category": "factual",
+      "difficulty": "easy",
+      "answer_preview": "The main types of vector database indexing algorithms are:\n\n1. **HNSW (Hierarchical Navigable Small World)**: A graph-based algorithm known for its excellent recall and speed. It is used by vector dat",
+      "retrieved_doc_titles": [
+        "Vector Databases Guide",
+        "test-doc.md"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 37327,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "context_recall": 0.0
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-004",
+      "query": "How do vector databases handle similarity search differently from traditional relational databases?",
+      "category": "factual",
+      "difficulty": "easy",
+      "answer_preview": "Vector databases handle similarity search differently from traditional relational databases in several key ways:\n\n1. **Data Type and Structure**: Vector databases are designed to store and query high-",
+      "retrieved_doc_titles": [
+        "Vector Databases Guide",
+        "test-doc.md"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 49542,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "context_recall": 0.5
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-005",
+      "query": "What are the best practices for writing effective prompts for LLMs?",
+      "category": "factual",
+      "difficulty": "easy",
+      "answer_preview": "Based on the provided context, the best practices for writing effective prompts for LLMs include:\n\n1. **Zero-shot Prompting**: Give the model a task without any examples.\n2. **Few-shot Prompting**: Pr",
+      "retrieved_doc_titles": [
+        "Prompt Engineering Best Practices",
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 46993,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.9999999999995003,
+        "context_recall": 0.0
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-006",
+      "query": "How does LangGraph implement state persistence across agent interactions?",
+      "category": "factual",
+      "difficulty": "medium",
+      "answer_preview": "LangGraph implements state persistence across agent interactions through checkpointing, which involves saving the graph state at each step. This feature enables resumable workflows, human-in-the-loop ",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 253,
+      "cached": true,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.9999999999990798,
+        "context_recall": 0.5
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-007",
+      "query": "What distance metrics are commonly used in vector similarity search?",
+      "category": "factual",
+      "difficulty": "medium",
+      "answer_preview": "Common distance metrics used in vector similarity search include:\n\n- **Cosine Similarity**: Measures the angle between two vectors. Values range from -1 to 1, where 1 means identical direction.\n- **Eu",
+      "retrieved_doc_titles": [
+        "Vector Databases Guide",
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 38966,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.985662154295675,
+        "context_recall": 0.0
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-008",
+      "query": "Compare chain-of-thought prompting with few-shot prompting techniques.",
+      "category": "comparison",
+      "difficulty": "medium",
+      "answer_preview": "Based on the provided context, chain-of-thought (CoT) prompting and few-shot prompting are two distinct techniques used in prompt engineering for large language models (LLMs).\n\n**Few-shot prompting** ",
+      "retrieved_doc_titles": [
+        "Prompt Engineering Best Practices",
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 271,
+      "cached": true,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.8220913937509827,
+        "context_recall": 0.3333333333333333
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-009",
+      "query": "What role does human-in-the-loop play in LangGraph agent workflows?",
+      "category": "factual",
+      "difficulty": "medium",
+      "answer_preview": "In LangGraph agent workflows, human-in-the-loop plays a crucial role by enabling the system to pause execution at any point, allowing for human intervention and approval before continuing. This featur",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 45941,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": {
+        "answer_relevancy": 0.9789195004565902,
+        "context_recall": 0.5
+      },
+      "error": null
+    },
+    {
+      "test_case_id": "tc-010",
+      "query": "What are the nutritional benefits of blueberries for cardiovascular health?",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "answer_preview": "None of the provided context documents contain information about the nutritional benefits of blueberries on cardiovascular health or related scientific studies. The documents focus on the technical as",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide",
+        "Vector Databases Guide"
+      ],
+      "rewrite_count": 2,
+      "latency_ms": 99055,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 1.0,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": null,
+      "error": null
+    }
+  ]
+}
