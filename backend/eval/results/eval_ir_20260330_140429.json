@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-03-30T14:04:29.204013+00:00",
+  "mode": "ir",
+  "total_cases": 3,
+  "errors": 0,
+  "aggregate_ir": {
+    "hit_rate": 1.0,
+    "mrr": 1.0,
+    "precision_at_k": 0.4666666666666666,
+    "recall_at_k": 1.0
+  },
+  "aggregate_ragas": {},
+  "results": [
+    {
+      "test_case_id": "tc-008",
+      "query": "Compare chain-of-thought prompting with few-shot prompting techniques.",
+      "category": "comparison",
+      "difficulty": "medium",
+      "answer_preview": "Based on the provided context, the comparison between chain-of-thought (CoT) prompting and few-shot prompting in large language model applications can be summarized as follows:\n\n**Chain-of-Thought Pro",
+      "retrieved_doc_titles": [
+        "Prompt Engineering Best Practices",
+        "test-doc.md"
+      ],
+      "rewrite_count": 2,
+      "latency_ms": 195790,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": null,
+      "error": null
+    },
+    {
+      "test_case_id": "tc-009",
+      "query": "What role does human-in-the-loop play in LangGraph agent workflows?",
+      "category": "factual",
+      "difficulty": "medium",
+      "answer_preview": "In LangGraph agent workflows, human-in-the-loop capabilities allow for the pause and resumption of execution based on human approval. This feature is enabled through checkpointing, which saves the gra",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide"
+      ],
+      "rewrite_count": 0,
+      "latency_ms": 110487,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 0.2,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": null,
+      "error": null
+    },
+    {
+      "test_case_id": "tc-010",
+      "query": "What are the nutritional benefits of blueberries for cardiovascular health?",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "answer_preview": "None of the provided context documents contain information about the nutritional benefits of blueberries on cardiovascular health or any related scientific studies. The documents focus on the technica",
+      "retrieved_doc_titles": [
+        "LangGraph Agentic RAG Guide",
+        "Vector Databases Guide"
+      ],
+      "rewrite_count": 2,
+      "latency_ms": 166813,
+      "cached": false,
+      "ir_metrics": {
+        "hit": true,
+        "reciprocal_rank": 1.0,
+        "precision_at_k": 1.0,
+        "recall_at_k": 1.0
+      },
+      "ragas_metrics": null,
+      "error": null
+    }
+  ]
+}

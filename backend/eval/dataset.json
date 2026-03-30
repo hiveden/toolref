@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "description": "ToolRef RAG evaluation dataset — hand-crafted from 4 test documents",
+  "namespace": "default",
+  "test_cases": [
+    {
+      "id": "tc-001",
+      "query": "What is LangGraph and how does it differ from simple chain-based architectures?",
+      "expected_doc_titles": ["LangGraph Agentic RAG Guide"],
+      "ground_truth": "LangGraph is a framework for building stateful, multi-step AI agent applications built on top of LangChain. Unlike simple chain-based architectures (input → process → output), LangGraph models workflows as directed graphs with cycles, branching, and human-in-the-loop capabilities.",
+      "category": "factual",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tc-002",
+      "query": "What is the self-corrective RAG pattern and what are its steps?",
+      "expected_doc_titles": ["LangGraph Agentic RAG Guide"],
+      "ground_truth": "The self-corrective RAG pattern involves a cycle of retrieve, grade, generate, check, and retry. It retrieves documents, grades their relevance, generates an answer, checks for hallucination and relevance, and retries with a rewritten query if quality is insufficient.",
+      "category": "factual",
+      "difficulty": "medium"
+    },
+    {
+      "id": "tc-003",
+      "query": "What are the main types of vector database indexing algorithms?",
+      "expected_doc_titles": ["Vector Databases Guide"],
+      "ground_truth": "The main types of vector database indexing algorithms include HNSW (Hierarchical Navigable Small World), IVF (Inverted File Index), and various tree-based methods. HNSW provides a good balance of speed and accuracy for approximate nearest neighbor search.",
+      "category": "factual",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tc-004",
+      "query": "How do vector databases handle similarity search differently from traditional relational databases?",
+      "expected_doc_titles": ["Vector Databases Guide"],
+      "ground_truth": "Vector databases are optimized for similarity search on high-dimensional vector embeddings, unlike traditional relational databases that operate on structured data with rows and columns. They use specialized indexing algorithms for approximate nearest neighbor search rather than exact matching.",
+      "category": "factual",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tc-005",
+      "query": "What are the best practices for writing effective prompts for LLMs?",
+      "expected_doc_titles": ["Prompt Engineering Best Practices"],
+      "ground_truth": "Best practices for prompt engineering include being specific and clear, providing examples (few-shot prompting), breaking complex tasks into steps, setting the role/context, and iterating on prompts based on output quality.",
+      "category": "factual",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tc-006",
+      "query": "How does LangGraph implement state persistence across agent interactions?",
+      "expected_doc_titles": ["LangGraph Agentic RAG Guide"],
+      "ground_truth": "LangGraph maintains state across interactions through its stateful graph architecture. State is maintained as the graph executes, and can be persisted across multiple agent interaction cycles, enabling complex multi-step workflows.",
+      "category": "factual",
+      "difficulty": "medium"
+    },
+    {
+      "id": "tc-007",
+      "query": "What distance metrics are commonly used in vector similarity search?",
+      "expected_doc_titles": ["Vector Databases Guide"],
+      "ground_truth": "Common distance metrics in vector similarity search include cosine similarity (measuring angle between vectors), Euclidean distance (L2 norm), and inner product (dot product). The choice depends on the embedding model and use case.",
+      "category": "factual",
+      "difficulty": "medium"
+    },
+    {
+      "id": "tc-008",
+      "query": "Compare chain-of-thought prompting with few-shot prompting techniques.",
+      "expected_doc_titles": ["Prompt Engineering Best Practices"],
+      "ground_truth": "Chain-of-thought prompting encourages the model to reason step by step before giving a final answer, improving accuracy on complex tasks. Few-shot prompting provides examples of input-output pairs to guide the model's behavior. Both can be combined for better results.",
+      "category": "comparison",
+      "difficulty": "medium"
+    },
+    {
+      "id": "tc-009",
+      "query": "What role does human-in-the-loop play in LangGraph agent workflows?",
+      "expected_doc_titles": ["LangGraph Agentic RAG Guide"],
+      "ground_truth": "LangGraph supports human-in-the-loop capabilities in agent workflows, allowing human oversight and intervention at specific nodes in the graph. This enables approval gates, manual corrections, and supervised decision points within automated agent pipelines.",
+      "category": "factual",
+      "difficulty": "medium"
+    },
+    {
+      "id": "tc-010",
+      "query": "What are the nutritional benefits of blueberries for cardiovascular health?",
+      "expected_doc_titles": [],
+      "ground_truth": "",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "note": "Off-topic query — should trigger CRAG rewrite and eventually return 'cannot answer' or empty"
+    }
+  ]
+}
