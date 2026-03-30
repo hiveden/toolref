@@ -65,4 +65,15 @@ async def toolref_query(
     return await _toolref_query(query=query, namespace=namespace, top_k=top_k)
 
 
+# ── Health endpoint (for Docker healthcheck) ─────────────────────────────────
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request):  # noqa: ARG001
+    """Lightweight health endpoint for Docker/K8s liveness probes."""
+    from starlette.responses import JSONResponse  # noqa: PLC0415
+
+    return JSONResponse({"status": "ok", "service": "toolref-mcp"})
+
+
 logger.debug("MCP server 'toolref' initialised with %d tool(s)", len(mcp._tool_manager._tools))  # noqa: SLF001
