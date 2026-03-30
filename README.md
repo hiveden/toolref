@@ -39,6 +39,12 @@ ToolRef is the knowledge layer that makes this practical:
 
 ToolRef sits in the gap: **MCP-native, production-grade RAG with retrieval quality you can measure.**
 
+## Demo
+
+![Chat UI — Agentic RAG query with source citations](docs/screenshots/chat-ui-query.png)
+
+*Chat UI showing a self-corrective RAG query with BGE-M3 retrieval, cross-encoder reranking, and traceable source citations.*
+
 ## Architecture
 
 ```
