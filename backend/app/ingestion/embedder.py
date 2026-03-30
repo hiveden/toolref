@@ -1,21 +1,14 @@
-# NOTE: Temporary lightweight model configuration.
-# Using sentence-transformers/all-MiniLM-L6-v2 (~90 MB, 384-d) instead of
-# BGE-M3 (2.3 GB, 1024-d) to unblock local development.
-# To revert: restore the FlagEmbedding import + BGEM3FlagModel in _load_model,
-# flip embed_texts back to returning real lexical weights, and set env vars
-# EMBEDDING_MODEL=BAAI/bge-m3 and EMBEDDING_DIM=1024.
+"""Embedding service backed by FlagEmbedding BGEM3FlagModel.
 
-"""Embedding service backed by sentence-transformers (lightweight mode).
+Generates **dense** (1024-d, L2-normalised) and **sparse** (lexical weights)
+embeddings simultaneously using the BGE-M3 model.
 
-Generates **dense** (384-d, L2-normalised) embeddings only.
-Sparse embeddings are not available with this model; ``embed_texts``
-always returns an empty list for the sparse component so that callers
-can detect the absence and substitute dummy values where required
-(e.g. Milvus SPARSE_FLOAT_VECTOR insertion via the ingestion pipeline).
+Interface::
 
-The BGE-M3 interface is intentionally preserved:
-  ``embed_texts(texts) -> tuple[ndarray, list[dict[str, float]]]``
-so switching back is a one-file change.
+    embed_texts(texts) -> tuple[np.ndarray, list[dict[str, float]]]
+
+* ``dense_vecs``      — numpy array of shape ``(N, 1024)``
+* ``lexical_weights`` — list of dicts mapping str(token_id) → weight
 
 The model is loaded lazily on first call to :meth:`embed_texts` and
 reused for the lifetime of the process (singleton pattern).
@@ -32,13 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 class EmbeddingService:
-    """Generate dense embeddings using sentence-transformers.
-
-    Sparse embeddings are not produced; callers receive an empty list
-    and must substitute dummy values when writing to Milvus.
+    """Generate dense + sparse embeddings using BGE-M3 (FlagEmbedding).
 
     Attributes:
-        model_name: HuggingFace model identifier.
+        model_name: HuggingFace model identifier (default: BAAI/bge-m3).
         batch_size: Maximum texts per inference batch.
     """
 
@@ -49,17 +39,18 @@ class EmbeddingService:
     ) -> None:
         self.model_name = model_name
         self.batch_size = batch_size
-        self._model: Any = None  # Lazy-loaded SentenceTransformer
+        self._model: Any = None  # Lazy-loaded BGEM3FlagModel
 
     # ── Lazy model loading ───────────────────────────────────────────────
 
     def _load_model(self) -> None:
-        """Load the sentence-transformers model into memory."""
-        from sentence_transformers import SentenceTransformer  # type: ignore[import-untyped]
+        """Load BGEM3FlagModel into memory (CPU, fp32)."""
+        from FlagEmbedding import BGEM3FlagModel  # type: ignore[import-untyped]
 
-        logger.info("Loading embedding model '%s' …", self.model_name)
-        self._model = SentenceTransformer(self.model_name)
-        logger.info("Embedding model loaded successfully")
+        logger.info("Loading BGE-M3 model '%s' …", self.model_name)
+        # use_fp16=False because we are running on CPU
+        self._model = BGEM3FlagModel(self.model_name, use_fp16=False)
+        logger.info("BGE-M3 model loaded successfully")
 
     def warmup(self) -> None:
         """Pre-load the model so the first real call is fast.
@@ -75,13 +66,10 @@ class EmbeddingService:
         self,
         texts: list[str],
     ) -> tuple[np.ndarray, list[dict[str, float]]]:
-        """Generate dense embeddings for a list of texts.
+        """Generate dense and sparse embeddings for a list of texts.
 
-        Sparse embeddings are *not* available with this lightweight model.
-        The second element of the returned tuple is always an empty list
-        ``[]``.  Callers that must write to Milvus should substitute a
-        dummy sparse vector ``{0: 0.0001}`` per chunk; callers performing
-        search should skip the sparse ANN request entirely.
+        Processes ``texts`` in batches of ``self.batch_size``, collects
+        results, and returns them as a single pair.
 
         Args:
             texts: Input strings to embed.
@@ -89,37 +77,42 @@ class EmbeddingService:
         Returns:
             A tuple ``(dense_embeddings, sparse_embeddings)`` where:
 
-            * ``dense_embeddings`` is a numpy array of shape ``(N, 384)``
+            * ``dense_embeddings`` is a numpy array of shape ``(N, 1024)``
               with L2-normalised rows.
-            * ``sparse_embeddings`` is always ``[]``.
+            * ``sparse_embeddings`` is a list of N dicts, each mapping
+              ``str(token_id)`` → ``float`` weight (lexical_weights from
+              BGE-M3).  Downstream code converts keys to ``int`` as needed.
         """
         if self._model is None:
             self._load_model()
 
         all_dense: list[np.ndarray] = []
+        all_sparse: list[dict[str, float]] = []
 
         for start in range(0, len(texts), self.batch_size):
             batch = texts[start : start + self.batch_size]
-            vecs: np.ndarray = self._model.encode(
+            output = self._model.encode(
                 batch,
-                convert_to_numpy=True,
-                normalize_embeddings=True,
+                batch_size=len(batch),
+                return_dense=True,
+                return_sparse=True,
+                return_colbert_vecs=False,
             )
-            all_dense.append(vecs)
+            all_dense.append(output["dense_vecs"])
+            all_sparse.extend(output["lexical_weights"])
 
-        dense_embeddings = (
+        dense_embeddings: np.ndarray = (
             np.concatenate(all_dense, axis=0)
             if all_dense
             else np.empty((0, settings.embedding_dim))
         )
         logger.info(
-            "Generated embeddings for %d texts (dense shape=%s)",
+            "Generated embeddings for %d texts (dense shape=%s, sparse count=%d)",
             len(texts),
             dense_embeddings.shape,
+            len(all_sparse),
         )
-        # Sparse is not produced by this lightweight model.
-        # Return empty list so downstream code can detect and handle absence.
-        return dense_embeddings, []
+        return dense_embeddings, all_sparse
 
 
 # Module-level singleton — shared by the ingestion pipeline.

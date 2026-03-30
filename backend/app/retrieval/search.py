@@ -1,17 +1,8 @@
-# NOTE: Temporary lightweight model configuration.
-# When the embedder returns an empty sparse list (sentence-transformers mode),
-# hybrid_search falls back to dense-only retrieval: the sparse ANN request is
-# skipped and reciprocal_rank_fusion receives an empty sparse_results list.
-# The full hybrid path is restored automatically once BGE-M3 is re-enabled.
-
 """Milvus hybrid search with RRF fusion.
 
 Implements the dense + sparse hybrid retrieval strategy described in
 architecture §4.2.4. Uses BGE-M3 embeddings (via :mod:`app.ingestion.embedder`)
 and Reciprocal Rank Fusion to combine results.
-
-In lightweight mode (sentence-transformers), sparse embeddings are absent and
-only the dense ANN search is executed.
 """
 
 from __future__ import annotations
@@ -215,7 +206,7 @@ async def hybrid_search(
 
     Steps:
       1. Embed the query using BGE-M3 (dense + sparse).
-      2. Perform two independent ANN searches in Milvus.
+      2. Perform two independent ANN searches in Milvus (dense COSINE + sparse IP).
       3. Fuse results with Reciprocal Rank Fusion (k=60).
 
     Args:
@@ -226,6 +217,9 @@ async def hybrid_search(
     Returns:
         List of dicts, each containing ``chunk_id``, ``doc_id``,
         ``parent_chunk_id``, ``namespace``, ``score``, and ``rrf_score``.
+
+    Raises:
+        ValueError: If the embedder returns an empty sparse list.
     """
     # Generate query embeddings (sync model, run in thread)
     dense_embs, sparse_embs = await asyncio.to_thread(
@@ -233,14 +227,17 @@ async def hybrid_search(
     )
 
     dense_embedding = dense_embs[0].tolist()
-    # Convert sparse keys to int for Milvus compatibility.
-    # In lightweight mode (sentence-transformers), sparse_embs is empty —
-    # use a dummy sparse vector so dense-only search proceeds.
-    if sparse_embs:
-        raw_sparse = sparse_embs[0]
-        sparse_embedding = {int(k): float(v) for k, v in raw_sparse.items()}
-    else:
-        sparse_embedding = {0: 0.0001}
+
+    # Defensive check — BGE-M3 should always produce sparse weights.
+    if not sparse_embs:
+        raise ValueError(
+            "embed_texts returned empty sparse embeddings for query; "
+            "verify that BGEM3FlagModel is loaded and return_sparse=True."
+        )
+
+    # Convert str token-id keys to int for Milvus SPARSE_FLOAT_VECTOR.
+    raw_sparse = sparse_embs[0]
+    sparse_embedding: dict[int, float] = {int(k): float(v) for k, v in raw_sparse.items()}
 
     # Run Milvus search in thread (pymilvus is synchronous)
     try:

@@ -1,10 +1,3 @@
-# NOTE: Temporary lightweight model configuration.
-# _write_milvus uses a dummy sparse vector {0: 0.0001} whenever the embedder
-# returns an empty sparse list (sentence-transformers mode).  The dummy value
-# satisfies Milvus SPARSE_FLOAT_VECTOR's non-null constraint while being
-# semantically meaningless — sparse search results are skipped at query time.
-# When BGE-M3 is restored, real sparse embeddings will flow through unchanged.
-
 """End-to-end document ingestion pipeline.
 
 Orchestrates the full flow:
@@ -77,16 +70,19 @@ class IngestPipeline:
     ) -> None:
         """Stage 5: Insert child chunk vectors into Milvus.
 
-        When ``sparse_embeddings`` is empty (lightweight sentence-transformers
-        mode), a dummy sparse vector ``{0: 0.0001}`` is substituted for every
-        chunk.  Milvus SPARSE_FLOAT_VECTOR fields require at least one non-zero
-        entry; the dummy value satisfies this constraint without carrying any
-        semantic meaning.
+        Both dense (1024-d COSINE) and sparse (SPARSE_FLOAT_VECTOR IP) fields
+        are populated from the real BGE-M3 embeddings produced by
+        :meth:`EmbeddingService.embed_texts`.
+
+        Args:
+            child_chunks: Child chunks to insert.
+            dense_embeddings: Numpy array of shape ``(N, 1024)``.
+            sparse_embeddings: List of N dicts mapping ``str(token_id)`` →
+                weight, as returned by BGEM3FlagModel ``lexical_weights``.
+            doc_id: UUID string of the parent document.
+            namespace: Document namespace.
         """
         from pymilvus import Collection
-
-        # Dummy sparse used when the embedder produces no real sparse vectors.
-        _DUMMY_SPARSE: dict[int, float] = {0: 0.0001}
 
         def _insert() -> None:
             collection = Collection(CHILD_CHUNKS_COLLECTION)
@@ -98,24 +94,15 @@ class IngestPipeline:
             dense_list: list[list[float]] = []
             sparse_list: list[dict[int, float]] = []
 
-            has_real_sparse = len(sparse_embeddings) > 0
-
             for idx, child in enumerate(child_chunks):
                 chunk_ids.append(child.chunk_id)
                 doc_ids.append(doc_id)
                 parent_ids.append(child.parent_chunk_id)
                 namespaces.append(namespace)
                 dense_list.append(dense_embeddings[idx].tolist())
-
-                if has_real_sparse:
-                    # Convert string keys to int keys for Milvus sparse format.
-                    raw_sparse = sparse_embeddings[idx]
-                    sparse_list.append(
-                        {int(k): float(v) for k, v in raw_sparse.items()}
-                    )
-                else:
-                    # No sparse embedding available; use dummy to satisfy schema.
-                    sparse_list.append(_DUMMY_SPARSE)
+                # Convert str token-id keys → int for Milvus SPARSE_FLOAT_VECTOR.
+                raw_sparse = sparse_embeddings[idx]
+                sparse_list.append({int(k): float(v) for k, v in raw_sparse.items()})
 
             data = [
                 chunk_ids,
