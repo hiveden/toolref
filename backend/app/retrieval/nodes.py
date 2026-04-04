@@ -114,6 +114,7 @@ GENERATE_PROMPT = """\
 You are a knowledgeable assistant. Answer the user's question based ONLY on \
 the provided context documents. Always cite your sources.
 
+{memory_section}\
 Question: {query}
 
 Context documents:
@@ -741,11 +742,51 @@ async def generate_node(state: RAGState) -> dict[str, Any]:
 
     Formats reranked documents as context and uses the LLM to produce
     an answer with ``[Source N]`` citations.
+
+    When ``state["conversation_id"]`` is set, conversation memory context
+    (short-term history + episode summaries) is injected into the prompt
+    and the user query / assistant answer are persisted to the DB.
     """
     t0 = time.monotonic()
     query = state["query"]
     reranked_docs = state.get("reranked_docs", [])
+    session_id: str | None = state.get("conversation_id")
     llm = get_llm()
+
+    # ── Memory context injection ──────────────────────────────────────────
+    memory_section = ""
+    if session_id:
+        try:
+            from app.memory.manager import ConversationMemoryManager  # local import avoids cycles
+            from app.db.engine import async_session as _async_session
+
+            mgr = ConversationMemoryManager()
+            async with _async_session() as mem_db:
+                ctx = await mgr.get_context_for_query(session_id, mem_db)
+
+            short_term = ctx.get("short_term", [])
+            episodes = ctx.get("episodes", [])
+
+            memory_lines: list[str] = []
+
+            if short_term:
+                memory_lines.append("[Conversation History]")
+                for msg in short_term[-10:]:  # last 5 turns (user+assistant = 10 msgs)
+                    speaker = "User" if msg["role"] == "user" else "Assistant"
+                    memory_lines.append(f"{speaker}: {msg['content']}")
+                memory_lines.append("")
+
+            if episodes:
+                memory_lines.append("[Previous Context]")
+                for ep in episodes:
+                    memory_lines.append(ep["content"])
+                memory_lines.append("")
+
+            if memory_lines:
+                memory_section = "\n".join(memory_lines) + "\n"
+
+        except Exception:
+            logger.exception("generate_node: failed to load memory context (session=%s)", session_id)
 
     # Format context
     docs_context = _format_docs_for_prompt(reranked_docs)
@@ -783,7 +824,11 @@ async def generate_node(state: RAGState) -> dict[str, Any]:
         })
 
     try:
-        prompt = GENERATE_PROMPT.format(query=query, context=docs_context)
+        prompt = GENERATE_PROMPT.format(
+            query=query,
+            context=docs_context,
+            memory_section=memory_section,
+        )
         response = await llm.ainvoke(prompt)
         answer = response.content if hasattr(response, "content") else str(response)
     except Exception:
@@ -799,6 +844,21 @@ async def generate_node(state: RAGState) -> dict[str, Any]:
             )
         else:
             answer = "I couldn't find relevant information to answer your question."
+
+    # ── Persist messages to memory (best-effort) ──────────────────────────
+    if session_id:
+        try:
+            from app.memory.manager import ConversationMemoryManager  # noqa: F811
+            from app.db.engine import async_session as _async_session  # noqa: F811
+
+            mgr = ConversationMemoryManager()
+            # Use the original query stored in state (before any rewrites for this turn)
+            original_query: str = state.get("query", query)
+            async with _async_session() as mem_db:
+                await mgr.add_message(session_id, "user", original_query, mem_db)
+                await mgr.add_message(session_id, "assistant", answer, mem_db)
+        except Exception:
+            logger.exception("generate_node: failed to persist messages (session=%s)", session_id)
 
     elapsed_ms = int((time.monotonic() - t0) * 1000)
     latency = state.get("latency_ms", {})

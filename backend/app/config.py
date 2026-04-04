@@ -82,13 +82,19 @@ class Settings(BaseSettings):
     openai_api_base: str = "https://api.openai.com/v1"
     deepseek_api_key: str = ""
     deepseek_api_base: str = "https://api.deepseek.com/v1"
+    llm_disable_thinking: bool = False  # Append /nothink for Qwen3 thinking models
 
     # --- Reranker ---
+    reranker_provider: str = "local"  # "local" | "jina"
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     reranker_top_k: int = 5
     # BGE-reranker-v2-m3 scores: ~0.9+ for relevant pairs, ~0.001 for irrelevant.
     # When the top reranker score exceeds this threshold, skip LLM grading entirely.
     reranker_confidence_threshold: float = 0.5
+    # Jina Reranker API settings (used when reranker_provider="jina")
+    jina_api_key: str = ""
+    jina_reranker_model: str = "jina-reranker-v2-base-multilingual"
+    jina_api_url: str = "https://api.jina.ai/v1/rerank"
 
     # --- Semantic Cache ---
     cache_similarity_threshold: float = 0.92
